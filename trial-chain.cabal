@@ -34,13 +34,16 @@ library
     build-depends:    QuickCheck
                     , aeson
                     , base ^>=4.16.0.0
+                    , binary
                     , bytestring
                     , containers
+                    , cryptohash-sha256
                     , effectful
                     , effectful-core >= 1.2.0.0
                     , generic-lens
                     , lens
                     , monad-validate
+                    , pretty-simple
                     , servant-server
                     , stm
                     , stm-containers
@@ -55,6 +58,7 @@ executable trial-chain
                     , aeson-pretty
                     , bytestring
                     , effectful-core >= 1.2.0.0
+                    , pretty-simple
                     , servant-server
                     , trial-chain
 

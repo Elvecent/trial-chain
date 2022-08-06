@@ -25,12 +25,7 @@ let
           new.stylish-haskell ( old: {
             configureFlags = [ "-f +ghc-lib" ];
           });
-        trial-chain = overrideCabal
-          (self.callCabal2nix "trial-chain" ./. {}) (old: {
-            libraryHaskellDepends = old.libraryHaskellDepends ++ (whenDev [
-              self.pretty-simple
-            ]);
-          });
+        trial-chain = self.callCabal2nix "trial-chain" ./. {};
       };
   };
     

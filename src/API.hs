@@ -7,8 +7,7 @@ Stability   : experimental
 -}
 
 module API
-  ( module Types.Transport
-  , API
+  ( API
   , BroadcastTx
   , GetTx
   , server
