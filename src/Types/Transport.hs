@@ -57,7 +57,7 @@ data Output = Output
     deriving anyclass (ToJSON, FromJSON)
 
 data Transaction = Transaction
-  { inputs  :: NonEmpty UnspentOutput
+  { inputs  :: [UnspentOutput]
   , outputs :: NonEmpty Output
   } deriving stock (Show, Generic)
     deriving anyclass (ToJSON, FromJSON)

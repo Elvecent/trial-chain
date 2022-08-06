@@ -1,4 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
 module Types.Chain where
 
 import           Control.Concurrent.STM
@@ -12,9 +11,3 @@ data TrialChainEnv = TrialChainEnv
   { txQueue :: TBQueue SignedTransaction
   , chain   :: TrialChainBlocks
   }
-
-newEnv :: IO TrialChainEnv
-newEnv = do
-  txQueue <- newTBQueueIO 10
-  chain <- M.newIO
-  return TrialChainEnv {..}

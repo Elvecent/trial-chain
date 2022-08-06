@@ -6,7 +6,7 @@ import           Effectful
 import           Effectful.Dispatch.Dynamic
 
 import           Env
-import           Types.Transport
+import           Types.Semantic
 
 data TrialChain :: Effect where
   AppendTx :: SignedTransaction -> TrialChain m TxId
