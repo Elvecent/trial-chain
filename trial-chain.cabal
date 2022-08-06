@@ -1,75 +1,81 @@
-cabal-version:      2.4
-name:               trial-chain
-version:            0.1.0.0
+cabal-version: 2.4
+name:          trial-chain
+version:       0.1.0.0
 synopsis:
-
 homepage:
-
-license:            NONE
-author:             Cyril Valyavin
-maintainer:         kvalyavin@yandex.ru
+license:
+author:        Cyril Valyavin
+maintainer:    kvalyavin@yandex.ru
 
 common defs
-    default-language:     GHC2021
-    default-extensions:   DeriveAnyClass
-                        , DerivingStrategies
-                        , DataKinds
-                        , LambdaCase
-                        , TypeFamilies
-                        , OverloadedLabels
-                          
-    ghc-options: -Wall -Wmissing-deriving-strategies
-                    
+  default-language:   GHC2021
+  default-extensions:
+    DataKinds
+    DeriveAnyClass
+    DerivingStrategies
+    LambdaCase
+    OverloadedLabels
+    TypeFamilies
+
+  ghc-options:        -Wall -Wmissing-deriving-strategies
+
 library
-    import:           defs
-    exposed-modules:  Types.Chain
-                    , Types.Transport
-                    , Types.Semantic
-                    , API.Handle
-                    , Examples
-                    , API
-                    , Effectful.TrialChain
-                    , Launch
-                    , Env
-    build-depends:    QuickCheck
-                    , aeson
-                    , base ^>=4.16.0.0
-                    , binary
-                    , bytestring
-                    , containers
-                    , cryptohash-sha256
-                    , effectful
-                    , effectful-core >= 1.2.0.0
-                    , generic-lens
-                    , lens
-                    , monad-validate
-                    , pretty-simple
-                    , servant-server
-                    , stm
-                    , stm-containers
-                    , warp
-    hs-source-dirs:   src
+  import:          defs
+  exposed-modules:
+    API
+    API.Handle
+    Effectful.TrialChain
+    Env
+    Examples
+    Launch
+    Types.Chain
+    Types.Semantic
+    Types.Semantic.Parse
+    Types.Semantic.Parse.Validation
+    Types.Transport
+
+  build-depends:
+    , aeson
+    , base               ^>=4.16.0.0
+    , binary
+    , bytestring
+    , containers
+    , cryptohash-sha256
+    , effectful
+    , effectful-core     >=1.2.0.0
+    , generic-lens
+    , lens
+    , monad-validate
+    , pretty-simple
+    , QuickCheck
+    , servant-server
+    , stm
+    , stm-containers
+    , warp
+
+  hs-source-dirs:  src
 
 executable trial-chain
-    import:           defs
-    main-is:          Main.hs
-    build-depends:
-                      base ^>=4.16.0.0
-                    , aeson-pretty
-                    , bytestring
-                    , effectful-core >= 1.2.0.0
-                    , pretty-simple
-                    , servant-server
-                    , trial-chain
+  import:         defs
+  main-is:        Main.hs
+  build-depends:
+    , aeson-pretty
+    , base            ^>=4.16.0.0
+    , bytestring
+    , effectful-core
+    , pretty-simple
+    , servant-server
+    , trial-chain
 
-    hs-source-dirs:   app
+  hs-source-dirs: app
 
 test-suite trial-chain-test
-    import:           defs
-    type:             exitcode-stdio-1.0
-    hs-source-dirs:   test
-    main-is:          Main.hs
-    build-depends:    base ^>=4.16.0.0
-                    , effectful-core >= 1.2.0.0
-                    , generic-lens
-                    , tasty-quickcheck
+  import:         defs
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is:        Main.hs
+  build-depends:
+    , base              ^>=4.16.0.0
+    , effectful-core    >=1.2.0.0
+    , generic-lens
+    , tasty-quickcheck

@@ -7,7 +7,7 @@
   
   haskellCompiler = "ghc923";
   
-  haskellOverrides = {
+  haskellOverrides = {    
     stylish-haskell = {
       pkg = "stylish-haskell";
       ver = "0.14.2.0";

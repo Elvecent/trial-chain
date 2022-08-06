@@ -8,11 +8,7 @@ let
 
   inherit (pkgs.lib.attrsets) mapAttrs;
   
-  haskellPackages =
-    pkgs.haskell.packages.${versions.haskellCompiler}.override {
-      overrides = self: super: with pkgs.haskell.lib;
-        mapAttrs (_: value: dontCheck value) super;
-    };
+  haskellPackages = pkgs.haskell.packages.${versions.haskellCompiler};
   
   myHaskellPackages = haskellPackages.override {
     overrides = self: super: with pkgs.haskell.lib;

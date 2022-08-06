@@ -1,0 +1,3 @@
+[submodule "effectful"]
+	path = effectful
+	url = https://github.com/haskell-effectful/effectful

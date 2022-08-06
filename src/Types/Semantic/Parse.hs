@@ -1,15 +1,24 @@
 {-# LANGUAGE RecordWildCards #-}
-module Types.Semantic.Parse where
+module Types.Semantic.Parse
+  ( parseTxId
+  , parseUnspentOutput
+  , parsePublicKey
+  , parseSignature
+  , parseContract
+  , parseOutput
+  , parseTransaction
+  , parseSignedTransaction
+  , runValidation
+  ) where
 
-import           Control.Lens           hiding (index)
-import           Control.Monad.Validate
-import           Data.Generics.Labels   ()
-import           Data.Map               (mapKeys)
+import           Control.Lens                    hiding (index)
+import           Data.Generics.Labels            ()
+import           Data.Map                        (mapKeys)
+import           Effectful
 
 import           Types.Semantic
-import qualified Types.Transport        as T
-
-data ValidationError = ValidationError
+import           Types.Semantic.Parse.Validation
+import qualified Types.Transport                 as T
 
 parseTxId :: T.TxId -> TxId
 parseTxId = view coerced
@@ -44,8 +53,8 @@ parseOutput o =
   Output {..}
 
 parseTransaction
-  :: MonadValidate ValidationError m
-  => T.Transaction -> m Transaction
+  :: Validation es
+  => T.Transaction -> Eff es Transaction
 parseTransaction tx = do
   let
     inputs     = tx ^.. #inputs . traversed
@@ -57,8 +66,8 @@ parseTransaction tx = do
   pure Transaction {..}
 
 parseSignedTransaction
-  :: MonadValidate ValidationError m
-  => T.SignedTransaction -> m SignedTransaction
+  :: Validation es
+  => T.SignedTransaction -> Eff es SignedTransaction
 parseSignedTransaction stx = do
   let
     signatures  = stx ^. #signatures
