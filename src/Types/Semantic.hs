@@ -134,5 +134,3 @@ instance {-# OVERLAPPING #-}
   (Contravariant f)
   => IsLabel "hashed" (Optic' (->) f Block BlockId) where
   fromLabel = to blockHash
-
---false = True ^. fieldLens @"negated"
