@@ -1,4 +1,11 @@
-module Types.Semantic.Parse.Validation where
+module Types.Semantic.Parse.Validation
+  ( ValidationError(..)
+  , ValidationErrors
+  , Validation
+  , runValidation
+  , dispute
+  , refute
+  ) where
 
 import           Control.Lens
 import           Effectful
@@ -6,20 +13,27 @@ import           Effectful.Error.Static
 import           Effectful.State.Static.Local
 
 import           Effectful.TrialChain
+import           Types.Transport
 
 type ValidationErrors = [ValidationError]
+
+data ValidationError
+  = AmountsDiffer Amount Amount
+  | CoinMissing UnspentOutput
+  | TxMissing   TxId
+  | SignatureMissing PublicKey
+  | OtherValidationError
+  deriving stock Show
 
 type Validation es =
   ( State ValidationErrors :> es
   , Error () :> es
   , TrialChain :> es
+  , IOE :> es
   )
 
-data ValidationError = ValidationError
-  deriving stock Show
-
 runValidation
-  :: TrialChain :> es
+  :: (TrialChain :> es, IOE :> es)
   => Eff (Error () : State ValidationErrors : es) a
   -> Eff es (Either CallStack a, ValidationErrors)
 runValidation m = m

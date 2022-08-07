@@ -1,4 +1,7 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
+
 module Types.Semantic.Parse
   ( parseTxId
   , parseUnspentOutput
@@ -12,10 +15,12 @@ module Types.Semantic.Parse
   ) where
 
 import           Control.Lens                    hiding (index)
+import           Control.Monad
 import           Data.Generics.Labels            ()
 import           Data.Map                        (mapKeys)
 import           Effectful
 
+import           Effectful.TrialChain
 import           Types.Semantic
 import           Types.Semantic.Parse.Validation
 import qualified Types.Transport                 as T
@@ -56,22 +61,52 @@ parseTransaction
   :: Validation es
   => T.Transaction -> Eff es Transaction
 parseTransaction tx = do
-  let
+  checkAmount
+  pure Transaction {..}
+  where
     inputs     = tx ^.. #inputs . traversed
                     & traversed %~ parseUnspentOutput
     outputs    = tx ^. #outputs
                     & traversed %~ parseOutput
     -- A user cannot submit a coinbase transaction
     isCoinbase = False
-  pure Transaction {..}
+    checkAmount = do
+      inputAmount <- sum <$> traverse (lookupCoin 0 #amount) inputs
+      unless (inputAmount == outputAmount) $
+        refute $ AmountsDiffer inputAmount outputAmount
+    outputAmount = outputs & sumOf (traversed . #amount)
 
 parseSignedTransaction
   :: Validation es
   => T.SignedTransaction -> Eff es SignedTransaction
 parseSignedTransaction stx = do
-  let
-    signatures  = stx ^. #signatures
-                       . to (mapKeys parsePublicKey)
-                       . to (fmap parseSignature)
   transaction <- stx ^. #transaction . to parseTransaction
+  checkSignatures transaction
   pure SignedTransaction {..}
+  where
+    signatures = stx
+      ^. #signatures
+      . to (mapKeys parsePublicKey)
+      . to (fmap parseSignature)
+    checkSignatures transaction = do
+      pks <- pubKeys transaction
+      void $ traverse checkSignature pks
+    checkSignature pk = case signatures ^? ix (pk :: PublicKey) of
+      Nothing -> refute $ SignatureMissing $ transportPublicKey pk
+      Just _  -> pure () -- We will not actually check signatures, only their presence
+    pubKeys tx = do
+      cs <- traverse (lookupCoin Trivial #contract) (tx ^. #inputs)
+      pure $ cs ^.. traversed . #_CheckSig . traversed
+
+lookupCoin
+  :: Validation es
+  => d -> _optic -> UnspentOutput -> Eff es d
+lookupCoin def fld uo = do
+  let txid = uo ^. #address
+  mtx <- lookupTx txid
+  case mtx of
+    Nothing -> dispute (TxMissing $ transportTxId txid) >> pure def
+    Just tx' ->
+      case tx' ^? #transaction . #outputs . ix (uo ^. #index) . fld of
+        Nothing -> dispute (CoinMissing $ transportUnspentOutput uo) >> pure def
+        Just x  -> pure x
