@@ -17,7 +17,8 @@ import           Types.Semantic
 
 miningThread :: TrialChainEnv -> IO ()
 miningThread env = forever $ do
-  threadDelay 10000000
+  let seconds = 1
+  threadDelay $ seconds * 1000000
   (txs, hd) <- atomically $ do
     txs <- flushTBQueue (env ^. #mempool)
     hd  <- readTVar (env ^. #head)

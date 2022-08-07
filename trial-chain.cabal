@@ -36,25 +36,24 @@ library
 
   build-depends:
                     QuickCheck
-                , aeson
-                , base               ^>=4.16.0.0
-                , binary
-                , bytestring
-                , containers
-                , cryptohash-sha256
-                , effectful
-                , effectful-core     >=1.2.0.0
-                , generic-lens
-                , hashable
-                , immortal
-                , lens
-                , monad-validate
-                , pretty-simple
-                , servant-server
-                , streaming
-                , stm
-                , stm-containers
-                , warp
+                  , aeson
+                  , base               ^>=4.16.0.0
+                  , binary
+                  , bytestring
+                  , containers
+                  , cryptohash-sha256
+                  , effectful
+                  , effectful-core     >=1.2.0.0
+                  , generic-lens
+                  , hashable
+                  , immortal
+                  , lens
+                  , pretty-simple
+                  , servant-server
+                  , streaming
+                  , stm
+                  , stm-containers
+                  , warp
 
   hs-source-dirs:  src
 
@@ -77,8 +76,10 @@ test-suite trial-chain-test
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
   main-is:        Main.hs
-  build-depends:
-    , base              ^>=4.16.0.0
-    , effectful-core    >=1.2.0.0
-    , generic-lens
-    , tasty-quickcheck
+  build-depends:  base              ^>=4.16.0.0
+                , effectful-core    >=1.2.0.0
+                , generic-lens
+                , http-client
+                , servant-client
+                , tasty-quickcheck
+                , trial-chain

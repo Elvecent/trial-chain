@@ -46,3 +46,4 @@ let
   };
 in
 if pkgs.lib.inNixShell then projectShell else myHaskellPackages
+#pkgs.haskell.lib.dontCheck myHaskellPackages.trial-chain

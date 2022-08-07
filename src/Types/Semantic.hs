@@ -1,4 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StrictData #-}
+
 {-|
 Module      : Types.Semantic
 Copyright   : (c) Cyril Valyavin, 2022

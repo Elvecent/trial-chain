@@ -4,6 +4,11 @@ A mock implementation for a toy API that supports publishing and retrieving bloc
 
 ### Building
 
+Use cachix to avoid building lots of dependencies:
+```
+cachix use elvecent-presonal
+```
+
 To build:
 ```bash
 nix-shell --run "cabal build"
