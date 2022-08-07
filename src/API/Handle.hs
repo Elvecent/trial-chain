@@ -7,37 +7,39 @@ module API.Handle
   ) where
 
 import           Control.Lens
+import           Control.Monad
 import qualified Data.ByteString.Lazy as B
 import           Effectful
+import           Effectful.Concurrent
 import           Effectful.TrialChain
-import           Servant              (Handler)
 
 import           Env
 import qualified Types.Semantic       as S
 import           Types.Semantic.Parse
 import           Types.Transport
 
-type EffectStack = '[TrialChain, IOE]
-
-type AppM = Eff EffectStack
+type AppM = Eff '[TrialChain, Concurrent, IOE]
 
 handleBroadcast :: SignedTransaction -> AppM TxId
 handleBroadcast tx = do
-  liftIO $ putStrLn "broadcasting transaction"
+  liftIO $ putStrLn "handling broadcast request"
   (etx, errs) <- runValidation $ parseSignedTransaction tx
+  unless (null errs) $
+    liftIO $ print errs
   case etx of
-    Left _    -> pure undefined
-    Right ptx -> appendTx ptx <&> S.transportTxId
+    Left cs   -> liftIO $ print cs >> pure (TxId mempty)
+    Right ptx -> broadcastTx ptx <&> S.transportTxId
 
 handleGet :: TxId -> AppM (Maybe SignedTransaction)
 handleGet txid = do
-  liftIO $ putStrLn "retrieving transaction"
+  liftIO $ putStrLn "handling get request"
   parseTxId txid
     & lookupTx
     & mapped . _Just %~ S.transportSignedTransaction
 
-runApp :: TrialChainEnv -> AppM a -> Handler a
+runApp :: MonadIO m => TrialChainEnv -> AppM a -> m a
 runApp env
       = liftIO
       . runEff
+      . runConcurrent
       . runTrialChainIO env

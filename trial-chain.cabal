@@ -35,23 +35,24 @@ library
     Types.Transport
 
   build-depends:
-    , aeson
-    , base               ^>=4.16.0.0
-    , binary
-    , bytestring
-    , containers
-    , cryptohash-sha256
-    , effectful
-    , effectful-core     >=1.2.0.0
-    , generic-lens
-    , lens
-    , monad-validate
-    , pretty-simple
-    , QuickCheck
-    , servant-server
-    , stm
-    , stm-containers
-    , warp
+                  QuickCheck
+                , aeson
+                , base               ^>=4.16.0.0
+                , binary
+                , bytestring
+                , containers
+                , cryptohash-sha256
+                , effectful
+                , effectful-core     >=1.2.0.0
+                , generic-lens
+                , immortal
+                , lens
+                , monad-validate
+                , pretty-simple
+                , servant-server
+                , stm
+                , stm-containers
+                , warp
 
   hs-source-dirs:  src
 

@@ -11,6 +11,6 @@ import           Types.Chain
 
 newEnv :: IO TrialChainEnv
 newEnv = do
-  txQueue <- newTBQueueIO 10
-  chain <- M.newIO
+  mempool <- newTBQueueIO 10
+  chain   <- M.newIO
   return TrialChainEnv {..}

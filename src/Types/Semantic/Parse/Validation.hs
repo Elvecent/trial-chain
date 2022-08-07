@@ -16,6 +16,7 @@ type Validation es =
   )
 
 data ValidationError = ValidationError
+  deriving stock Show
 
 runValidation
   :: TrialChain :> es
