@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards      #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Effectful.TrialChain where
@@ -6,36 +7,71 @@ import           Control.Lens
 import           Effectful
 import           Effectful.Concurrent.STM
 import           Effectful.Dispatch.Dynamic
+import           Prelude                    hiding (head)
+import           StmContainers.Map          as M
+import           Streaming
+import qualified Streaming.Prelude          as S
 
 import           Env
 import           Types.Semantic
 
 data TrialChain :: Effect where
-  AppendTx :: SignedTransaction -> TrialChain m ()
+  -- | Write a block to the chain
+  AppendBlock :: Block -> TrialChain m BlockId
+  -- | Enqueue a transaction to the mempool
   BroadcastTx :: SignedTransaction -> TrialChain m TxId
-  LookupTx :: TxId -> TrialChain m (Maybe SignedTransaction)
+  -- | Create an iterator over blocks
+  GetBlocks   :: TrialChain m (Stream (Of Block) IO ())
 
 type instance DispatchOf TrialChain = 'Dynamic
 
-appendTx :: TrialChain :> es => SignedTransaction -> Eff es ()
-appendTx = send . AppendTx
+appendBlock :: TrialChain :> es => Block -> Eff es BlockId
+appendBlock = send . AppendBlock
 
 broadcastTx :: TrialChain :> es => SignedTransaction -> Eff es TxId
 broadcastTx = send . BroadcastTx
 
-lookupTx :: TrialChain :> es => TxId -> Eff es (Maybe SignedTransaction)
-lookupTx = send . LookupTx
+getBlocks :: TrialChain :> es => Eff es (Stream (Of Block) IO ())
+getBlocks = send GetBlocks
 
 runTrialChainIO
-  :: Concurrent :> es
+  :: forall es a
+  . Concurrent :> es
   => TrialChainEnv
   -> Eff (TrialChain : es) a
   -> Eff es a
 runTrialChainIO env = interpret $ \_ -> \case
-  AppendTx tx -> pure ()
+  AppendBlock b -> do
+    atomically $ do
+      M.insert b blockId chain
+      writeTVar head blockId
+    pure blockId
+    where
+      blockId = b ^. #hashed
+
   BroadcastTx tx -> do
     atomically $
-      writeTBQueue (env ^. #mempool) tx
+      writeTBQueue mempool tx
     pure $ tx ^. #hashed
-  LookupTx txid  -> do
-    pure Nothing
+
+  GetBlocks -> do
+    headBlock <- atomically $ do
+      hd <- readTVar head
+      M.lookup hd chain
+    nextBlock headBlock
+      & hoist (runEff . runConcurrent)
+      & pure
+    where
+      nextBlock current = do
+        case current of
+          Just b -> do
+            next <- lift $ atomically $
+              M.lookup (b ^. #parent) chain
+            S.yield b
+            nextBlock next
+          Nothing -> pure ()
+  where
+    TrialChainEnv {..} = env
+
+lookupTx :: TxId -> Eff es (Maybe SignedTransaction)
+lookupTx txid = pure Nothing

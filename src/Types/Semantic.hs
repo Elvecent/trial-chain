@@ -39,6 +39,7 @@ import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Char8   as B
 import           Data.ByteString.Lens
 import           Data.Generics.Labels    ()
+import           Data.Hashable (Hashable)
 import           Data.List.NonEmpty
 import           Data.Map                (Map, mapKeys)
 import           GHC.Generics            (Generic)
@@ -162,7 +163,8 @@ transportSignedTransaction st = T.SignedTransaction
 
 -- | Block's id is actually its hash
 newtype BlockId = BlockId String
-  deriving stock (Show, Generic)
+  deriving stock (Show, Eq, Generic)
+  deriving newtype Hashable
 
 data Block = Block
   { transactions :: NonEmpty SignedTransaction

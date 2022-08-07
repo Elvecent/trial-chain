@@ -35,7 +35,7 @@ library
     Types.Transport
 
   build-depends:
-                  QuickCheck
+                    QuickCheck
                 , aeson
                 , base               ^>=4.16.0.0
                 , binary
@@ -45,11 +45,13 @@ library
                 , effectful
                 , effectful-core     >=1.2.0.0
                 , generic-lens
+                , hashable
                 , immortal
                 , lens
                 , monad-validate
                 , pretty-simple
                 , servant-server
+                , streaming
                 , stm
                 , stm-containers
                 , warp

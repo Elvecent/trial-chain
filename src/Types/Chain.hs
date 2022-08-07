@@ -6,9 +6,10 @@ import qualified StmContainers.Map      as M
 
 import           Types.Semantic
 
-type TrialChainBlocks = M.Map TxId Block
+type TrialChainBlocks = M.Map BlockId Block
 
 data TrialChainEnv = TrialChainEnv
   { mempool :: TBQueue SignedTransaction
   , chain   :: TrialChainBlocks
+  , head    :: TVar BlockId
   } deriving stock (Generic)

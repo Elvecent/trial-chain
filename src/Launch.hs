@@ -16,7 +16,7 @@ miningThread :: TrialChainEnv -> IO ()
 miningThread env = forever $ do
   tx <- atomically $
     readTBQueue (env ^. #mempool)
-  runApp env $ appendTx tx
+  -- runApp env $ appendTx tx
   putStrLn $ "appended tx " <> show tx
 
 runTrialChainServer :: W.Port -> IO ()
