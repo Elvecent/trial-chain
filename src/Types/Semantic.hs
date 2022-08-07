@@ -114,8 +114,8 @@ data Transaction = Transaction
 
 transportTransaction :: Transaction -> T.Transaction
 transportTransaction tx = T.Transaction
-  { T.inputs = tx ^. #inputs & fmap transportUnspentOutput
-  , T.outputs = undefined
+  { T.inputs  = tx ^. #inputs & fmap transportUnspentOutput
+  , T.outputs = tx ^. #outputs & traversed %~ transportOutput
   }
 
 data SignedTransaction = SignedTransaction
