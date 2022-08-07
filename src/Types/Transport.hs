@@ -1,3 +1,5 @@
+{-# LANGUAGE StrictData #-}
+
 module Types.Transport
   ( TxId(..)
   , UnspentOutput(..)
@@ -17,14 +19,18 @@ import           GHC.Generics       (Generic)
 import           Servant
 
 newtype TxId = TxId String
-  deriving stock (Show, Generic)
+  deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
-  deriving newtype (FromHttpApiData, ToHttpApiData, MimeRender PlainText)
+  deriving newtype ( FromHttpApiData
+                   , ToHttpApiData
+                   , MimeRender PlainText
+                   , MimeUnrender PlainText
+                   )
 
 data UnspentOutput = UnspentOutput
   { address :: TxId
   , index   :: Int
-  } deriving stock (Show, Generic)
+  } deriving stock (Show, Eq, Generic)
     deriving anyclass (ToJSON, FromJSON)
 
 type Amount = Micro
@@ -42,7 +48,7 @@ jsonTaggedSum = defaultOptions
 data Contract
   = CheckSig (NonEmpty PublicKey)
   | Trivial
-  deriving stock (Show, Generic)
+  deriving stock (Show, Eq, Generic)
 
 instance ToJSON Contract where
   toJSON = genericToJSON jsonTaggedSum
@@ -53,21 +59,21 @@ instance FromJSON Contract where
 data Output = Output
   { contract :: Contract
   , amount   :: Amount
-  } deriving stock (Show, Generic)
+  } deriving stock (Show, Eq, Generic)
     deriving anyclass (ToJSON, FromJSON)
 
 data Transaction = Transaction
   { inputs  :: [UnspentOutput]
   , outputs :: NonEmpty Output
-  } deriving stock (Show, Generic)
+  } deriving stock (Show, Eq, Generic)
     deriving anyclass (ToJSON, FromJSON)
 
 newtype Signature = Signature String
-  deriving stock (Show, Generic)
+  deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data SignedTransaction = SignedTransaction
   { transaction :: Transaction
   , signatures  :: Map PublicKey Signature
-  } deriving stock (Show, Generic)
+  } deriving stock (Show, Eq, Generic)
     deriving anyclass (ToJSON, FromJSON)

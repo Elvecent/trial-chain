@@ -78,8 +78,9 @@ test-suite trial-chain-test
   main-is:        Main.hs
   build-depends:  base              ^>=4.16.0.0
                 , effectful-core    >=1.2.0.0
-                , generic-lens
                 , http-client
+                , servant
                 , servant-client
-                , tasty-quickcheck
+                , tasty
+                , tasty-hunit
                 , trial-chain
