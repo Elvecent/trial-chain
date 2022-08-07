@@ -39,7 +39,7 @@ import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Char8   as B
 import           Data.ByteString.Lens
 import           Data.Generics.Labels    ()
-import           Data.Hashable (Hashable)
+import           Data.Hashable           (Hashable)
 import           Data.List.NonEmpty
 import           Data.Map                (Map, mapKeys)
 import           GHC.Generics            (Generic)
@@ -49,7 +49,7 @@ import qualified Types.Transport         as T
 
 -- | Transaction's ID is really it's hash
 newtype TxId = TxId String
-  deriving stock (Show, Generic)
+  deriving stock (Show, Eq, Generic)
   deriving anyclass (Binary)
 
 transportTxId :: TxId -> T.TxId

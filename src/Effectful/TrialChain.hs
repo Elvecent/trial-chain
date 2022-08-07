@@ -73,5 +73,25 @@ runTrialChainIO env = interpret $ \_ -> \case
   where
     TrialChainEnv {..} = env
 
-lookupTx :: TxId -> Eff es (Maybe SignedTransaction)
-lookupTx txid = pure Nothing
+lookupTx
+  :: ( IOE :> es
+    , TrialChain :> es
+    )
+  => TxId -> Eff es (Maybe SignedTransaction)
+lookupTx txid = do
+  blocks <- getBlocks
+  blocks
+    & S.map findTx
+    & S.filter isJust
+    & S.head
+    & fmap flatten
+    & liftIO
+  where
+    findTx block = block
+      ^? #transactions
+      . traversed
+      . filteredBy (#hashed . (only txid))
+    isJust = \case
+      Nothing -> False
+      _       -> True
+    flatten = join . S.fst'

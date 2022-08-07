@@ -5,7 +5,6 @@ import qualified Control.Immortal         as I
 import           Control.Lens
 import           Control.Monad
 import           Data.Proxy
-import           Effectful.TrialChain
 import qualified Network.Wai.Handler.Warp as W
 import           Servant
 
@@ -16,7 +15,7 @@ miningThread :: TrialChainEnv -> IO ()
 miningThread env = forever $ do
   tx <- atomically $
     readTBQueue (env ^. #mempool)
-  -- runApp env $ appendTx tx
+  -- TODO append block
   putStrLn $ "appended tx " <> show tx
 
 runTrialChainServer :: W.Port -> IO ()
