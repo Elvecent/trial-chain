@@ -37,7 +37,11 @@ miningThread initialBlock env = do
       Nothing -> pure ()
       Just netxs -> do
         bid <- runApp env $ appendBlock $ Block netxs hd
-        putStrLn $ "mined block " <> show bid
+        putStrLn $ "mined " <> show bid
+        putStrLn "with transactions"
+        void $ traverse (\txid -> putStr "  " >> print txid) (
+          (netxs & traversed %~ view #hashed)
+          :: NonEmpty TxId)
         threadDelay $ seconds * 1000000
 
 runTrialChainServer :: Maybe Block -> W.Port -> IO ()

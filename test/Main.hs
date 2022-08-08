@@ -50,8 +50,8 @@ readAndWriteTxs = do
       pure
       (S.each $ snd exampleTxs)
   let
-    secondToLastTxId = head $ drop (length exampleTxs - 1) txids
-  pure $ (secondToLastTxId, lastTx $ secondToLastTxId)
+    secondToLastTxId = head $ drop (length (snd exampleTxs) - 1) txids
+  (secondToLastTxId,) <$> getTx (last txids)
   where
     runStream = fmap S.fst' . S.toList
     wait = liftIO $ threadDelay 1500000
@@ -86,7 +86,7 @@ exampleTxs =
         [ UnspentOutput txid 0
         ]
         [ Output (CheckSig [PublicKey "alice"]) 10
-        , Output (CheckSig [PublicKey "bob"]) 40
+        , Output (CheckSig [PublicKey "bob"]) 30
         ])
       [(PublicKey "bob", Signature "signebybob")]
 
