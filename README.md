@@ -15,7 +15,7 @@ nix-shell --run "cabal build all --disable-optimization"
 ```
 To run:
 ```bash
-nix-shell --run "cabal run --disable-optimization"
+nix-shell --run "cabal run trial-chain --disable-optimization"
 ```
 
 To test:
