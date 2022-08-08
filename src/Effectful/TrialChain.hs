@@ -67,7 +67,9 @@ runTrialChainIO env = interpret $ \_ -> \case
   BroadcastTx tx -> do
     atomically $
       writeTBQueue mempool tx
-    pure $ tx ^. #hashed
+    pure txid
+    where
+      txid = tx ^. #hashed
 
   GetBlocks -> do
     headBlock <- atomically $ do

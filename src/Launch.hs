@@ -15,25 +15,36 @@ import           Effectful.TrialChain
 import           Env
 import           Types.Semantic
 
-miningThread :: TrialChainEnv -> IO ()
-miningThread env = forever $ do
-  let seconds = 1
-  threadDelay $ seconds * 1000000
-  (txs, hd) <- atomically $ do
-    txs <- flushTBQueue (env ^. #mempool)
-    hd  <- readTVar (env ^. #head)
-    pure (txs, hd)
-  case nonEmpty txs of
+miningThread :: Maybe Block -> TrialChainEnv -> IO ()
+miningThread initialBlock env = do
+  case initialBlock of
     Nothing -> pure ()
-    Just netxs -> do
-      bid <- runApp env $ appendBlock $ Block netxs hd
-      putStrLn $ "mined block " <> show bid
+    Just  b -> do
+      runApp env $ appendBlock b
+      putStr "\nmined initial block "
+      print (b ^. #hashed :: BlockId)
+      putStrLn "with transactions"
+      void $ traverse (\txid -> putStr "  " >> print txid) (
+        (b ^. #transactions & traversed %~ view #hashed)
+        :: NonEmpty TxId)
+  forever $ do
+    let seconds = 1
+    (txs, hd) <- atomically $ do
+      txs <- flushTBQueue (env ^. #mempool)
+      hd  <- readTVar (env ^. #head)
+      pure (txs, hd)
+    case nonEmpty txs of
+      Nothing -> pure ()
+      Just netxs -> do
+        bid <- runApp env $ appendBlock $ Block netxs hd
+        putStrLn $ "mined block " <> show bid
+        threadDelay $ seconds * 1000000
 
-runTrialChainServer :: W.Port -> IO ()
-runTrialChainServer p = do
+runTrialChainServer :: Maybe Block -> W.Port -> IO ()
+runTrialChainServer initialBlock p = do
   env <- newEnv
   void $
-    I.create $ \_ -> miningThread env
+    I.create $ \_ -> miningThread initialBlock env
   W.run p $ serve api $
     hoistServer api (runApp env) server
   where api = Proxy @API

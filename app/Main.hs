@@ -6,4 +6,4 @@ import           Launch   (runTrialChainServer)
 main :: IO ()
 main = do
   print charliePaid
-  runTrialChainServer 8080
+  runTrialChainServer Nothing 8080
