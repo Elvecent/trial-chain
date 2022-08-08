@@ -35,7 +35,7 @@ data ValidationError
   | CoinMissing T.UnspentOutput
   | TxMissing   T.TxId
   | SignatureMissing T.PublicKey
-  | OtherValidationError
+  | NonPositiveOutputAmount T.Amount
   deriving stock Show
 
 parseTxId :: T.TxId -> TxId
@@ -88,6 +88,8 @@ parseTransaction tx = do
     isCoinbase = False
     checkAmount = do
       inputAmount <- sum <$> traverse (lookupCoin 0 #amount) inputs
+      unless (outputAmount > 0) $
+        refute [NonPositiveOutputAmount outputAmount]
       unless (inputAmount == outputAmount) $
         refute [AmountsDiffer inputAmount outputAmount]
     outputAmount = outputs & sumOf (traversed . #amount)
