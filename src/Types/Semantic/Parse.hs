@@ -18,10 +18,12 @@ module Types.Semantic.Parse
 
 import           Control.Lens         hiding (index)
 import           Control.Monad
+import           Data.Aeson           (FromJSON, ToJSON)
 import           Data.Generics.Labels ()
 import           Data.Map             (mapKeys)
 import           Effectful
 import           Effectful.Concurrent (Concurrent)
+import           GHC.Generics         (Generic)
 
 import           Effectful.TrialChain
 import           Effectful.Validation
@@ -36,7 +38,8 @@ data ValidationError
   | TxMissing   T.TxId
   | SignatureMissing T.PublicKey
   | NonPositiveOutputAmount T.Amount
-  deriving stock Show
+  deriving stock (Show, Generic)
+  deriving anyclass (ToJSON, FromJSON)
 
 parseTxId :: T.TxId -> TxId
 parseTxId = view coerced

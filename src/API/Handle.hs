@@ -4,6 +4,7 @@ module API.Handle
   , handleGet
   , runApp
   , AppM
+  , ValidationErrors
   ) where
 
 import           Control.Lens
@@ -20,7 +21,7 @@ import           Types.Transport
 
 type AppM = Eff '[TrialChain, Concurrent, IOE]
 
-handleBroadcast :: SignedTransaction -> AppM TxId
+handleBroadcast :: SignedTransaction -> AppM (Either ValidationErrors TxId)
 handleBroadcast tx = do
   liftIO $ putStrLn "handling broadcast request"
   (etx, errs :: ValidationErrors) <-
@@ -28,8 +29,8 @@ handleBroadcast tx = do
   unless (null errs) $
     liftIO $ print errs
   case etx of
-    Left cs   -> liftIO $ print cs >> pure (TxId mempty)
-    Right ptx -> broadcastTx ptx <&> S.transportTxId
+    Left cs   -> liftIO $ print cs >> (pure $ Left errs)
+    Right ptx -> broadcastTx ptx <&> S.transportTxId <&> Right
 
 handleGet :: TxId -> AppM (Maybe SignedTransaction)
 handleGet txid = do

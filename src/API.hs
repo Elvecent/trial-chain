@@ -27,7 +27,7 @@ type API
 -- | Broadcast method announces a signed transaction to the blockchain
 type BroadcastTx = "broadcast"
                 :> ReqBody '[JSON] SignedTransaction
-                :> Post '[PlainText] TxId
+                :> Post '[JSON] (Either ValidationErrors TxId)
 
 -- | Get method retrieves a transaction by its @TxId@
 type GetTx = "get"

@@ -12,6 +12,7 @@ import           Servant.Client               hiding (Client)
 
 import           API
 import           Effectful.Validation
+import           Types.Semantic.Parse         (ValidationErrors)
 import           Types.Transport
 
 data Client :: Effect where
@@ -31,11 +32,15 @@ runClient
   :: forall es a. (Validation [String] es, IOE :> es)
   => Int -> Manager -> Eff (Client : es) a -> Eff es a
 runClient port man = interpret $ \_ -> \case
-  BroadcastTx tx -> runClientM' $ broadcastTx' tx
+  BroadcastTx tx -> do
+    eres <- runClientM' $ broadcastTx' tx
+    case eres of
+      Left errs -> refute [show errs]
+      Right res -> pure res
   GetTx     txid -> do
     mtx <- runClientM' $ getTx' txid
     case mtx of
-      Nothing -> refute $ ["transaction not found: " <> show txid]
+      Nothing -> refute ["transaction not found: " <> show txid]
       Just tx -> pure tx
   where
     runClientM' :: forall x. ClientM x -> Eff es x
@@ -46,7 +51,7 @@ runClient port man = interpret $ \_ -> \case
         Left err  -> refute [show err]
         Right res -> pure res
 
-broadcastTx' :: SignedTransaction -> ClientM TxId
+broadcastTx' :: SignedTransaction -> ClientM (Either ValidationErrors TxId)
 getTx' :: TxId -> ClientM (Maybe SignedTransaction)
 broadcastTx' :<|> getTx' = client (Proxy @API)
 

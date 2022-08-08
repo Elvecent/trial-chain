@@ -23,8 +23,6 @@ newtype TxId = TxId String
   deriving anyclass (ToJSON, FromJSON)
   deriving newtype ( FromHttpApiData
                    , ToHttpApiData
-                   , MimeRender PlainText
-                   , MimeUnrender PlainText
                    )
 
 data UnspentOutput = UnspentOutput
