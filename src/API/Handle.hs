@@ -23,7 +23,8 @@ type AppM = Eff '[TrialChain, Concurrent, IOE]
 handleBroadcast :: SignedTransaction -> AppM TxId
 handleBroadcast tx = do
   liftIO $ putStrLn "handling broadcast request"
-  (etx, errs) <- runValidation $ parseSignedTransaction tx
+  (etx, errs :: ValidationErrors) <-
+    runValidation $ parseSignedTransaction tx
   unless (null errs) $
     liftIO $ print errs
   case etx of

@@ -3,6 +3,7 @@ module Types.Semantic.Parse.Validation
   , ValidationErrors
   , Validation
   , runValidation
+  , runValidationNoCallStack
   , dispute
   , refute
   ) where
@@ -33,22 +34,37 @@ type Validation es =
   )
 
 runValidation
-  :: (TrialChain :> es, IOE :> es)
-  => Eff (Error () : State ValidationErrors : es) a
-  -> Eff es (Either CallStack a, ValidationErrors)
+  :: Monoid e
+  => Eff (Error () : State e : es) a
+  -> Eff es (Either CallStack a, e)
 runValidation m = m
   & runError
   & over (mapped .  _Left) fst
   & runState mempty
 
+runValidationNoCallStack
+  :: Monoid e
+  => Eff (Error () : State e : es) a
+  -> Eff es (Either e a)
+runValidationNoCallStack m = m
+  & runErrorNoCallStack
+  & runState mempty
+  & fmap (\(eres, errs) -> eres & _Left .~ errs)
+
 -- | Throw a non-fatal error
 dispute
-  :: Validation es
-  => ValidationError -> Eff es ()
-dispute e = modify ((:) e)
+  :: ( Monoid e
+    , State e :> es
+    , Error () :> es
+    )
+  => e -> Eff es ()
+dispute e = modify (e <>)
 
 -- | Throw a fatal error and exit
 refute
-  :: Validation es
-  => ValidationError -> Eff es ()
-refute e = modify ((:) e) >> throwError ()
+  :: ( Monoid e
+    , State e :> es
+    , Error () :> es
+    )
+  => e -> Eff es a
+refute e = modify (e <>) >> throwError ()

@@ -12,6 +12,7 @@ module Types.Semantic.Parse
   , parseTransaction
   , parseSignedTransaction
   , runValidation
+  , ValidationErrors
   ) where
 
 import           Control.Lens                    hiding (index)
@@ -73,7 +74,7 @@ parseTransaction tx = do
     checkAmount = do
       inputAmount <- sum <$> traverse (lookupCoin 0 #amount) inputs
       unless (inputAmount == outputAmount) $
-        refute $ AmountsDiffer inputAmount outputAmount
+        refute [AmountsDiffer inputAmount outputAmount]
     outputAmount = outputs & sumOf (traversed . #amount)
 
 parseSignedTransaction
@@ -92,7 +93,7 @@ parseSignedTransaction stx = do
       pks <- pubKeys transaction
       void $ traverse checkSignature pks
     checkSignature pk = case signatures ^? ix (pk :: PublicKey) of
-      Nothing -> refute $ SignatureMissing $ transportPublicKey pk
+      Nothing -> refute [SignatureMissing $ transportPublicKey pk]
       Just _  -> pure () -- We will not actually check signatures, only their presence
     pubKeys tx = do
       cs <- traverse (lookupCoin Trivial #contract) (tx ^. #inputs)
@@ -105,8 +106,8 @@ lookupCoin def fld uo = do
   let txid = uo ^. #address
   mtx <- lookupTx txid
   case mtx of
-    Nothing -> dispute (TxMissing $ transportTxId txid) >> pure def
+    Nothing -> dispute [TxMissing $ transportTxId txid] >> pure def
     Just tx' ->
       case tx' ^? #transaction . #outputs . ix (uo ^. #index) . fld of
-        Nothing -> dispute (CoinMissing $ transportUnspentOutput uo) >> pure def
+        Nothing -> dispute [CoinMissing $ transportUnspentOutput uo] >> pure def
         Just x  -> pure x

@@ -71,7 +71,9 @@ test-suite trial-chain-test
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
   main-is:        Main.hs
+  other-modules:  Effectful.Client
   build-depends:  base              ^>=4.16.0.0
+                , effectful-core
                 , http-client
                 , servant
                 , servant-client

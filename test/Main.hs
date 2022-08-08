@@ -4,47 +4,35 @@
 module Main (main) where
 
 import           Control.Concurrent
-import           Data.Proxy
-import           Network.HTTP.Client hiding (Proxy)
-import           Servant.API
-import           Servant.Client
+import           Effectful
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
-import           API
+import           Effectful.Client
 import           Launch
 import           Types.Transport
 
+testPort :: Int
+testPort = 8085
+
 main :: IO ()
 main = defaultMain $
-  withResource (forkIO $ runTrialChainServer 8085) killThread (const tests)
+  withResource (forkIO $ runTrialChainServer testPort) killThread (const tests)
 
 tests :: TestTree
 tests = testGroup "Tests"
-  [ testCase "Transaction reads back" $ script >>= \etx ->
-      etx @?= Right exampleTx
+  [ testCase "Transaction reads back" $
+      runScript testPort script >>= \etx ->
+        etx @?= Right exampleTx
   ]
 
-script :: IO (Either String SignedTransaction)
+script
+  :: (IOE :> es, Client :> es)
+  => Eff es SignedTransaction
 script = do
-  manager' <- newManager defaultManagerSettings
-  let
-    env = mkClientEnv manager' (BaseUrl Http "localhost" 8085 "")
-  etxId <- runClientM (broadcastTx exampleTx) env
-  case etxId of
-    Left err -> pure $ Left $ show err
-    Right txId -> do
-      threadDelay 1500000
-      etx <- runClientM (getTx txId) env
-      case etx of
-        Left err -> pure $ Left $ show err
-        Right Nothing -> pure $ Left "failed to retrieve transaction"
-        Right (Just tx) ->
-          pure $ Right tx
-
-broadcastTx :: SignedTransaction -> ClientM TxId
-getTx :: TxId -> ClientM (Maybe SignedTransaction)
-broadcastTx :<|> getTx = client (Proxy @API)
+  txid <- broadcastTx exampleTx
+  liftIO $ threadDelay 1500000
+  getTx txid
 
 exampleTx :: SignedTransaction
 exampleTx = SignedTransaction
