@@ -59,10 +59,13 @@ library
 executable trial-chain
   import:         defs
   main-is:        Main.hs
-  build-depends:
-    , base            ^>=4.16.0.0
-    , pretty-simple
-    , trial-chain
+  build-depends:  base            ^>=4.16.0.0
+                , aeson
+                , binary
+                , hex-text
+                , lens
+                , pretty-simple
+                , trial-chain
 
   hs-source-dirs: app
 

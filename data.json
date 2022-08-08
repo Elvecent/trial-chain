@@ -1,0 +1,37 @@
+{
+  "signatures": [
+    [
+      "charlie",
+      "signedbycharlie"
+    ]
+  ],
+  "transaction": {
+    "inputs": [
+      {
+        "address": "036e4749bdd5b920403c7dba0c137e0bd069a32088994b0e9e55e4d1effaa549",
+        "index": 0
+      }
+    ],
+    "outputs": [
+      {
+        "amount": 80,
+        "contract": {
+          "contents": [
+            "alice",
+            "bob"
+          ],
+          "type": "CheckSig"
+        }
+      },
+      {
+        "amount": 20,
+        "contract": {
+          "contents": [
+            "charlie"
+          ],
+          "type": "CheckSig"
+        }
+      }
+    ]
+  }
+}

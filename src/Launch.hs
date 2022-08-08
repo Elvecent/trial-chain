@@ -20,7 +20,7 @@ miningThread initialBlock env = do
   case initialBlock of
     Nothing -> pure ()
     Just  b -> do
-      runApp env $ appendBlock b
+      void $ runApp env $ appendBlock b
       putStr "\nmined initial block "
       print (b ^. #hashed :: BlockId)
       putStrLn "with transactions"
