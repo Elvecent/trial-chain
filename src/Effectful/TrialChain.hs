@@ -15,13 +15,28 @@ import qualified Streaming.Prelude          as S
 import           Env
 import           Types.Semantic
 
+data SomeConcurrent a = SomeConcurrent
+  { runSomeConcurrent
+      :: forall es. Concurrent :> es
+      => Eff es a
+  } deriving stock (Functor)
+
+instance Applicative SomeConcurrent where
+  pure x = SomeConcurrent $ pure x
+  (SomeConcurrent ff) <*> (SomeConcurrent fx) = SomeConcurrent (ff <*> fx)
+
+instance Monad SomeConcurrent where
+  (SomeConcurrent mx) >>= mf = SomeConcurrent $ do
+    x <- mx
+    runSomeConcurrent (mf x)
+
 data TrialChain :: Effect where
   -- | Write a block to the chain
   AppendBlock :: Block -> TrialChain m BlockId
   -- | Enqueue a transaction to the mempool
   BroadcastTx :: SignedTransaction -> TrialChain m TxId
   -- | Create an iterator over blocks
-  GetBlocks   :: TrialChain m (Stream (Of Block) IO ())
+  GetBlocks   :: TrialChain m (Stream (Of Block) SomeConcurrent ())
 
 type instance DispatchOf TrialChain = 'Dynamic
 
@@ -31,7 +46,7 @@ appendBlock = send . AppendBlock
 broadcastTx :: TrialChain :> es => SignedTransaction -> Eff es TxId
 broadcastTx = send . BroadcastTx
 
-getBlocks :: TrialChain :> es => Eff es (Stream (Of Block) IO ())
+getBlocks :: TrialChain :> es => Eff es (Stream (Of Block) SomeConcurrent ())
 getBlocks = send GetBlocks
 
 runTrialChainIO
@@ -59,13 +74,13 @@ runTrialChainIO env = interpret $ \_ -> \case
       hd <- readTVar head
       M.lookup hd chain
     nextBlock headBlock
-      & hoist (runEff . runConcurrent)
       & pure
     where
+      nextBlock :: Maybe Block -> Stream (Of Block) SomeConcurrent ()
       nextBlock current = do
         case current of
           Just b -> do
-            next <- lift $ atomically $
+            next <- lift $ SomeConcurrent $ atomically $
               M.lookup (b ^. #parent) chain
             S.yield b
             nextBlock next
@@ -74,18 +89,20 @@ runTrialChainIO env = interpret $ \_ -> \case
     TrialChainEnv {..} = env
 
 lookupTx
-  :: ( IOE :> es
+  :: forall es.
+    ( Concurrent :> es
     , TrialChain :> es
     )
   => TxId -> Eff es (Maybe SignedTransaction)
 lookupTx txid = do
   blocks <- getBlocks
-  blocks
-    & S.map findTx
-    & S.filter isJust
-    & S.head
-    & fmap flatten
-    & liftIO
+  let res =
+        blocks
+        & S.map findTx
+        & S.filter isJust
+        & S.head
+        & fmap flatten
+  runSomeConcurrent res
   where
     findTx block = block
       ^? #transactions

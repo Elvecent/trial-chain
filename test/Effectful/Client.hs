@@ -6,16 +6,13 @@ import           Effectful
 import           Effectful.Dispatch.Dynamic
 import           Effectful.Error.Static
 import           Effectful.State.Static.Local
-import           Network.HTTP.Client             hiding (Proxy)
-import           Servant.API                     hiding ((:>))
-import           Servant.Client                  hiding (Client)
+import           Network.HTTP.Client          hiding (Proxy)
+import           Servant.API                  hiding ((:>))
+import           Servant.Client               hiding (Client)
 
 import           API
-import           Types.Semantic.Parse.Validation hiding (Validation)
+import           Effectful.Validation
 import           Types.Transport
-
-
-type Validation es = (IOE :> es, State [String] :> es, Error () :> es)
 
 data Client :: Effect where
   BroadcastTx :: SignedTransaction -> Client m TxId
@@ -31,14 +28,14 @@ getTx :: Client :> es => TxId -> Eff es SignedTransaction
 getTx = send . GetTx
 
 runClient
-  :: forall es a. Validation es
+  :: forall es a. (Validation [String] es, IOE :> es)
   => Int -> Manager -> Eff (Client : es) a -> Eff es a
 runClient port man = interpret $ \_ -> \case
   BroadcastTx tx -> runClientM' $ broadcastTx' tx
   GetTx     txid -> do
     mtx <- runClientM' $ getTx' txid
     case mtx of
-      Nothing -> refute @[String] $ ["transaction not found: " <> show txid]
+      Nothing -> refute $ ["transaction not found: " <> show txid]
       Just tx -> pure tx
   where
     runClientM' :: forall x. ClientM x -> Eff es x
@@ -46,7 +43,7 @@ runClient port man = interpret $ \_ -> \case
       let
         env = mkClientEnv man (BaseUrl Http "localhost" port "")
       liftIO (runClientM req env) >>= \case
-        Left err  -> refute @[String] [show err]
+        Left err  -> refute [show err]
         Right res -> pure res
 
 broadcastTx' :: SignedTransaction -> ClientM TxId
@@ -61,5 +58,5 @@ runScript port script = do
   manager' <- liftIO $ newManager defaultManagerSettings
   script
     & runClient port manager'
-    & runValidationNoCallStack @[String]
+    & runValidationNoCallStack
     & runEff

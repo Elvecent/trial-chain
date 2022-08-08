@@ -1,7 +1,5 @@
-module Types.Semantic.Parse.Validation
-  ( ValidationError(..)
-  , ValidationErrors
-  , Validation
+module Effectful.Validation
+  ( Validation
   , runValidation
   , runValidationNoCallStack
   , dispute
@@ -13,24 +11,10 @@ import           Effectful
 import           Effectful.Error.Static
 import           Effectful.State.Static.Local
 
-import           Effectful.TrialChain
-import           Types.Transport
-
-type ValidationErrors = [ValidationError]
-
-data ValidationError
-  = AmountsDiffer Amount Amount
-  | CoinMissing UnspentOutput
-  | TxMissing   TxId
-  | SignatureMissing PublicKey
-  | OtherValidationError
-  deriving stock Show
-
-type Validation es =
-  ( State ValidationErrors :> es
+type Validation e es =
+  ( State e :> es
   , Error () :> es
-  , TrialChain :> es
-  , IOE :> es
+  , Monoid e
   )
 
 runValidation
@@ -53,18 +37,12 @@ runValidationNoCallStack m = m
 
 -- | Throw a non-fatal error
 dispute
-  :: ( Monoid e
-    , State e :> es
-    , Error () :> es
-    )
+  :: Validation e es
   => e -> Eff es ()
 dispute e = modify (e <>)
 
 -- | Throw a fatal error and exit
 refute
-  :: ( Monoid e
-    , State e :> es
-    , Error () :> es
-    )
+  :: Validation e es
   => e -> Eff es a
 refute e = modify (e <>) >> throwError ()

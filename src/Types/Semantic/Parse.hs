@@ -1,5 +1,6 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE StrictData            #-}
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 module Types.Semantic.Parse
@@ -15,16 +16,27 @@ module Types.Semantic.Parse
   , ValidationErrors
   ) where
 
-import           Control.Lens                    hiding (index)
+import           Control.Lens         hiding (index)
 import           Control.Monad
-import           Data.Generics.Labels            ()
-import           Data.Map                        (mapKeys)
+import           Data.Generics.Labels ()
+import           Data.Map             (mapKeys)
 import           Effectful
+import           Effectful.Concurrent (Concurrent)
 
 import           Effectful.TrialChain
+import           Effectful.Validation
 import           Types.Semantic
-import           Types.Semantic.Parse.Validation
-import qualified Types.Transport                 as T
+import qualified Types.Transport      as T
+
+type ValidationErrors = [ValidationError]
+
+data ValidationError
+  = AmountsDiffer { inputAmount :: T.Amount, outputAmount :: T.Amount }
+  | CoinMissing T.UnspentOutput
+  | TxMissing   T.TxId
+  | SignatureMissing T.PublicKey
+  | OtherValidationError
+  deriving stock Show
 
 parseTxId :: T.TxId -> TxId
 parseTxId = view coerced
@@ -59,7 +71,10 @@ parseOutput o =
   Output {..}
 
 parseTransaction
-  :: Validation es
+  :: ( TrialChain :> es
+    , Concurrent :> es
+    , Validation ValidationErrors es
+    )
   => T.Transaction -> Eff es Transaction
 parseTransaction tx = do
   checkAmount
@@ -78,7 +93,10 @@ parseTransaction tx = do
     outputAmount = outputs & sumOf (traversed . #amount)
 
 parseSignedTransaction
-  :: Validation es
+  :: ( TrialChain :> es
+    , Concurrent :> es
+    , Validation ValidationErrors es
+    )
   => T.SignedTransaction -> Eff es SignedTransaction
 parseSignedTransaction stx = do
   transaction <- stx ^. #transaction . to parseTransaction
@@ -100,7 +118,10 @@ parseSignedTransaction stx = do
       pure $ cs ^.. traversed . #_CheckSig . traversed
 
 lookupCoin
-  :: Validation es
+  :: ( TrialChain :> es
+    , Concurrent :> es
+    , Validation ValidationErrors es
+    )
   => d -> _optic -> UnspentOutput -> Eff es d
 lookupCoin def fld uo = do
   let txid = uo ^. #address

@@ -25,13 +25,13 @@ library
     API
     API.Handle
     Effectful.TrialChain
+    Effectful.Validation
     Env
     Examples
     Launch
     Types.Chain
     Types.Semantic
     Types.Semantic.Parse
-    Types.Semantic.Parse.Validation
     Types.Transport
 
   build-depends:
